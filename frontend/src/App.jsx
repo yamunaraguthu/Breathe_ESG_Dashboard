@@ -38,7 +38,7 @@ function App() {
 
   const fetchCompanies = async () => {
 
-    const response = await fetch("http://127.0.0.1:8000/api/companies/");
+    const response = await fetch(${BASE_URL}/api/companies/");
 
     const data = await response.json();
 
@@ -58,7 +58,7 @@ function App() {
   
   const addCompany = async () => {
 
-    await fetch("http://127.0.0.1:8000/api/companies/", {
+    await fetch(${BASE_URL}/api/companies/", {
 
       method: "POST",
 
@@ -85,7 +85,7 @@ function App() {
 
   formData.append("file", file);
 
-  await fetch("http://127.0.0.1:8000/api/datasources/upload_csv/", {
+  await fetch(${BASE_URL}/api/datasources/upload_csv/", {
 
     method:"POST",
 
@@ -101,7 +101,7 @@ function App() {
 
   const deleteCompany = async (id) => {
 
-    await fetch(`http://127.0.0.1:8000/api/companies/${id}/`, {
+    await fetch(${BASE_URL}/api/companies/${id}/`, {
 
       method: "DELETE",
     });
@@ -111,7 +111,7 @@ function App() {
 
   const updateCompany = async (id, companyName,companyIndustry) => {
 
-  await fetch(`http://127.0.0.1:8000/api/companies/${id}/`, {
+  await fetch(${BASE_URL}/api/companies/${id}/`, {
 
     method: "PUT",
 

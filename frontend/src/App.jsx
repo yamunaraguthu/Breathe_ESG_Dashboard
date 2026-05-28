@@ -42,6 +42,7 @@ function App() {
     toast.success("Company Added Successfully");
     setName("");
     setIndustry("");
+    setSourceType("");
   };
 
   const uploadCSV = async () => {
@@ -83,6 +84,7 @@ function App() {
         <input className="border p-3 rounded-lg bg-white text-black w-80" type="text" placeholder="Company Name" value={name} onChange={(e) => setName(e.target.value)} />
         <input className="border p-3 rounded-lg bg-white text-black w-80" type="text" placeholder="Industry" value={industry} onChange={(e) => setIndustry(e.target.value)} />
         <select value={sourceType} onChange={(e) => setSourceType(e.target.value)} className="bg-white text-black p-1 rounded-lg w-80 mb-5 border border-gray-400">
+    
           <option value="">Select Source</option>
           <option value="SAP">SAP</option>
           <option value="Utility">Utility</option>

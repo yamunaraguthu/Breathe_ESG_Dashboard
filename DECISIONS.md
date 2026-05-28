@@ -1,114 +1,61 @@
 # DECISIONS.md
 
-## Major Decisions Taken
+## 1. Django + React Stack
+Django REST Framework + React chose chesanu.
+- Django ORM multi-tenant data models ki suitable
+- DRF serializers source-type validation ki clean
+- React recharts analyst dashboard ki fast rendering
 
-### 1. Django + React Stack
+## 2. SAP Data Handling
+SAP flat-file CSV format choose chesanu (IDoc kadu).
+**Why flat-file:** IDoc parsing enterprise middleware (SAP PI/XI)
+require chestuundi — prototype scope lo realistic kadu.
+Flat-file exports SAP transaction SE16/SE16N lo directly possible,
+client IT team involvement takkuva.
+**What I handled:** material number, plant code, quantity, unit,
+date (YYYYMMDD format)
+**What I ignored:** German column headers normalization, BAPI
+authentication, OData service flows, plant code lookup tables
+**Real world risk:** Production lo plant codes master data table
+tho join cheyyadam mandatory — without it cost center attribution breaks.
 
-I used Django REST Framework for backend APIs and React for frontend UI because the assignment specifically requested Django and React.
+## 3. Utility Data Handling
+Portal CSV export choose chesanu (PDF/API kadu).
+**Why CSV:** Facilities teams 90% cases lo utility portal lo CSV
+download chestaru (e.g., PG&E, Tata Power portals). PDF parsing
+OCR errors introduce chestuundi, utility APIs still rare in India.
+**What I handled:** kWh consumption, billing period start/end,
+meter ID, tariff type
+**What I ignored:** PDF bill parsing, multi-tariff structures,
+billing period → calendar month normalization
+**Real world risk:** Billing periods don't align to calendar months
+— aggregating to monthly Scope 2 requires proration logic not built here.
 
-Reason:
+## 4. Travel Data Handling
+Simplified CSV upload choose chesanu (Concur/Navan API kadu).
+**Why:** Concur API OAuth2 + SAP integration require chestuundi —
+assignment scope lo external auth setup realistic kadu.
+Navan API docs chusanu — trip records flight segments, hotel nights,
+ground transport ga separate avutaai, each tо different emission factors.
+**What I handled:** travel category (flight/hotel/ground), origin,
+destination, date
+**What I ignored:** Airport code → great circle distance calculation,
+ICAO emission factors per aircraft type, hotel star rating → energy intensity
 
-* Fast API development
-* Easy frontend integration
-* Good support for CRUD operations and dashboards
+## 5. Analyst Review Design
+Pending → Approved/Rejected two-state model choose chesanu.
+**Why:** Assignment asked for analyst sign-off before audit lock.
+Simple status field sufficient for prototype — production lo
+multi-level approval workflow + role-based access needed.
 
----
+## 6. Multi-tenancy
+Company-level tenant isolation implement chesanu.
+Each DataSource, EmissionRecord company FK tho scoped —
+cross-tenant data leakage prevent avutundi.
 
-### 2. Simplified ESG Ingestion Workflow
-
-Instead of building full enterprise-grade ingestion pipelines, I focused on a realistic prototype workflow:
-
-* Manual company entry
-* CSV upload ingestion
-* Source tracking
-* Analyst review
-
-Reason:
-The assignment emphasized understanding and defendable decisions over feature quantity.
-
----
-
-### 3. Source Types Chosen
-
-The application supports:
-
-* SAP
-* Utility
-* Travel
-
-Reason:
-These were explicitly mentioned in the assignment requirements.
-
----
-
-### 4. Utility Data Handling
-
-I assumed facilities teams export electricity data mainly through CSV portal exports.
-
-Reason:
-CSV exports are common and easier to prototype within limited assignment time.
-
-Ignored:
-
-* PDF parsing
-* Utility APIs
-* OCR pipelines
-
----
-
-### 5. SAP Data Handling
-
-I modeled SAP ingestion as simplified flat-file style records.
-
-Reason:
-Real SAP integrations are highly complex and require enterprise infrastructure.
-
-Ignored:
-
-* IDoc parsing
-* BAPI integration
-* OData authentication flows
-
----
-
-### 6. Travel Data Handling
-
-Travel data was represented using simplified travel source entries.
-
-Reason:
-Real corporate travel APIs require authentication and external integrations.
-
-Ignored:
-
-* Airport distance calculations
-* Emission factor APIs
-* Real travel platform integrations
-
----
-
-### 7. Analyst Review Design
-
-Each company record begins in Pending status and can be approved manually.
-
-Reason:
-This simulates analyst validation before audit workflows.
-
----
-
-### 8. UI Decisions
-
-I used a dark ESG-inspired dashboard UI with charts and analytics cards.
-
-Reason:
-Improves readability and provides a professional analyst dashboard appearance.
-
----
-
-## Questions I Would Ask the PM
-
-* What scale of ingestion volume is expected?
-* Should analyst approvals support role-based access?
-* Are audit logs required for every edit?
-* Should normalization rules differ per source?
-* Which deployment environment is preferred for production?
-
+## Questions for PM
+1. Ingestion volume per client per month? (affects async queue decision)
+2. Role-based approvals needed? (analyst vs auditor vs admin)
+3. Per-edit audit trail mandatory? (Django simple-history library ready)
+4. Unit normalization rules source-specific or global?
+5. Which utility providers are priority clients using?

@@ -91,3 +91,8 @@ but who changed it and when. Every edit creates an AuditLog entry.
 ---
 
 ## Relationships
+**Company → DataSource:** One enterprise client can have multiple ingestion events (SAP upload, Utility CSV, Travel data)
+
+**DataSource → EmissionRecord:** One ingestion event produces multiple emission records (one CSV = many rows)
+
+**EmissionRecord → AuditLog:** Every edit to a record is logged — full change history maintained for auditors

@@ -1,73 +1,57 @@
 # TRADEOFFS.md
 
-## Tradeoffs and Features Not Built
+## Three Things I Deliberately Did Not Build
 
-### 1. Real SAP Integration
+### 1. User Authentication & Role-Based Access
+**What I skipped:** Django auth, analyst login, role separation
+(analyst vs auditor vs admin), per-user audit trail.
 
-Not built:
+**Why:** Building auth properly — JWT tokens, permission classes,
+role-based API filtering — would have taken 30-40% of available time.
+The core value of this assignment is the data model and ingestion
+pipeline, not login screens.
 
-* Live SAP API integrations
-* IDoc processing
-* BAPI authentication
+**What breaks without it:** changed_by in AuditLog is a plain string,
+not a FK to User. In production, any analyst can approve any record
+with no accountability trail.
 
-Reason:
-Enterprise SAP systems are highly complex and require production infrastructure and credentials.
-
-Tradeoff:
-I used simplified ingestion inputs to focus on analyst workflows and ESG review functionality.
-
----
-
-### 2. Advanced Audit Logging
-
-Not built:
-
-* Full edit history
-* Immutable audit records
-* User-level action tracking
-
-Reason:
-The prototype focuses on ingestion and approval workflows within limited assignment time.
-
-Tradeoff:
-Approval status simulation was implemented instead of enterprise-grade audit systems.
+**Production fix:** Add Django allauth + DRF TokenAuthentication +
+UserProfile model with role field. 2-3 days of focused work.
 
 ---
 
-### 3. Automated Unit Normalization
+### 2. Real-Time Unit Normalization Pipeline
+**What I skipped:** Automatic kWh → MWh conversion, liters → GJ
+for fuel, CO2e calculation using IPCC emission factors.
 
-Not built:
+**Why:** Emission factor tables are source-specific and
+region-specific — India grid emission factor (CEA 2023: 0.716
+kgCO2/kWh) differs from UK (0.233 kgCO2/kWh). Building a
+defensible normalization layer requires a lookup table with
+versioned factors, not hardcoded math.
 
-* Dynamic unit conversions
-* Emission factor calculations
-* Automatic validation pipelines
+**What breaks without it:** emission_value is manually entered —
+no automatic calculation from amount + unit + emission_factor.
+Analysts must compute CO2e themselves before entering.
 
-Reason:
-Different ESG data sources use highly inconsistent formats and conversion rules.
-
-Tradeoff:
-The current prototype uses simplified normalized data handling for clarity and faster implementation.
-
----
-
-## Additional Limitations
-
-* No authentication system
-* No multi-user role management
-* No real deployment-scale database optimization
-* No external API integrations
-* No OCR or PDF parsing pipeline
+**Production fix:** Add EmissionFactor model (source_type,
+activity_type, region, factor_value, factor_unit, valid_from,
+valid_to). Wire ingestion pipeline to auto-calculate on upload.
 
 ---
 
-## Why These Tradeoffs Were Chosen
+### 3. Async Ingestion Pipeline
+**What I skipped:** Celery + Redis task queue for CSV processing,
+failed row tracking, partial ingestion recovery.
 
-The assignment emphasized:
+**Why:** For a prototype with small CSV files, synchronous
+processing is fine. Setting up Celery + Redis on Render free tier
+adds infrastructure complexity with no demo value.
 
-* judgment
-* defendable decisions
-* realistic workflows
-* understanding over feature quantity
+**What breaks without it:** Large CSV uploads (10,000+ rows) will
+timeout on Render's 30-second request limit. Failed rows are not
+tracked — if row 847 fails validation, the user has no visibility.
 
-The prototype was intentionally kept focused and understandable instead of overengineering unsupported enterprise features.
-
+**Production fix:** Celery worker + Redis broker. Each upload
+creates an IngestionJob record. Rows processed async, failures
+logged to IngestionError table with row number + reason.
